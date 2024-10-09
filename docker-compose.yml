@@ -1,0 +1,55 @@
+version: '3.8'
+services:
+#  command: >
+#    bash -c "https://github.com/Dzheb/Reka.git ./Reka
+#    && chown -R www-data:www-data ./Reka
+#    && chmod -R 777 ./Reka
+#services:
+  # PHP-FPM service
+  app:
+    build:
+      context: ./php
+    container_name: reka
+    restart: unless-stopped
+    volumes:
+#      - reka-backend:/app/
+      - ./Reka-docker:/var/www/html
+    working_dir: /var/www/html
+    networks:
+      - laravel-network
+
+  # Nginx service
+  webserver:
+    image: nginx:alpine
+    container_name: nginx-webserver
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+ #     - reka-backend:/app/
+      - ./Reka-docker:/var/www/html
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+   # working_dir: /var/www/html/public
+    depends_on:
+      - app
+    networks:
+      - laravel-network
+
+  # MySQL service (optional)
+  db:
+    image: mysql:5.7
+    container_name: db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: reka
+    volumes:
+      - ./dbdata:/var/lib/mysql
+      - ./mysql/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+    networks:
+      - laravel-network
+
+networks:
+  laravel-network:
+    driver: bridge
